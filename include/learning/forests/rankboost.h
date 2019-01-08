@@ -149,7 +149,6 @@ class Rankboost: public LTR_Algorithm {
   size_t T;
   size_t best_T;
   bool go_parallel;
-  char const *omp_schedule;
   WeakRanker **weak_rankers = NULL;
   float *alphas = NULL;
   float best_r = 0.0;

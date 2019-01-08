@@ -34,7 +34,7 @@ Dataset::Dataset(size_t n_instances, size_t n_features) {
   num_queries_ = 0;
   last_instance_id_ = 0;
 
-  if (posix_memalign((void **) &data_, 16,
+  if (alloc_aligned((void **) &data_, 16,
                      max_instances_ * num_features_ * sizeof(Feature)) != 0) {
     std::cerr << "!!! Impossible to allocate memory for dataset storage."
               << std::endl;
@@ -42,7 +42,7 @@ Dataset::Dataset(size_t n_instances, size_t n_features) {
   }
   std::memset(data_, 0, max_instances_ * num_features_ * sizeof(Feature));
 
-  if (posix_memalign((void **) &labels_, 16, max_instances_ * sizeof(Label))
+  if (alloc_aligned((void **) &labels_, 16, max_instances_ * sizeof(Label))
       != 0) {
     std::cerr
         << "!!! Impossible to allocate memory for relevance labels storage."
@@ -55,9 +55,9 @@ Dataset::Dataset(size_t n_instances, size_t n_features) {
 
 Dataset::~Dataset() {
   if (data_)
-    free(data_);
+    free_aligned(data_);
   if (labels_)
-    free(labels_);
+    free_aligned(labels_);
 }
 
 void Dataset::addInstance(QueryID q_id, Label i_label,

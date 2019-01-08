@@ -21,6 +21,10 @@
  */
 #include <limits>
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #include <ctime>
+#endif
+
 #include "optimization/post_learning/cleaver/random_adv_pruning.h"
 
 namespace quickrank {

@@ -28,6 +28,24 @@
 #include "types.h"
 #include "data/queryresults.h"
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #include <malloc.h>
+  static int alloc_aligned(void **memptr, size_t alignment, size_t size) {
+    *memptr = _aligned_malloc(size, alignment);
+    return *memptr == nullptr;
+  }
+  static void free_aligned(void* ptr) {
+    free(ptr);
+  }
+#elif (_POSIX_C_SOURCE >= 200112L)
+  static int alloc_aligned(void **memptr, size_t alignment, size_t size) {
+    return posix_memalign(memptr, alignment, size);
+  }
+  static void free_aligned(void* ptr) {
+    free(ptr);
+  }
+#endif
+
 namespace quickrank {
 namespace data {
 

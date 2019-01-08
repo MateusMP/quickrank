@@ -26,6 +26,59 @@
 #include <sys/stat.h>
 #include <list>
 
+#if defined(_WIN32) || defined(__CYGWIN__) 
+// if typedef doesn't exist (msvc, blah)
+typedef intptr_t ssize_t;
+
+ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
+    size_t pos;
+    int c;
+
+    if (lineptr == NULL || stream == NULL || n == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    c = fgetc(stream);
+    if (c == EOF) {
+        return -1;
+    }
+
+    if (*lineptr == NULL) {
+        *lineptr = (char*)malloc(128);
+        if (*lineptr == NULL) {
+            return -1;
+        }
+        *n = 128;
+    }
+
+    pos = 0;
+    while(c != EOF) {
+        if (pos + 1 >= *n) {
+            size_t new_size = *n + (*n >> 2);
+            if (new_size < 128) {
+                new_size = 128;
+            }
+            char *new_ptr = (char*)realloc(*lineptr, new_size);
+            if (new_ptr == NULL) {
+                return -1;
+            }
+            *n = new_size;
+            *lineptr = new_ptr;
+        }
+
+        ((unsigned char *)(*lineptr))[pos ++] = c;
+        if (c == '\n') {
+            break;
+        }
+        c = fgetc(stream);
+    }
+
+    (*lineptr)[pos] = '\0';
+    return pos;
+}
+#endif
+
 #include "io/svml.h"
 #include "utils/strutils.h"
 
@@ -38,7 +91,9 @@ namespace io {
 std::unique_ptr<data::Dataset> Svml::read_horizontal(
     const std::string &filename) {
 
-  FILE *f = fopen(filename.c_str(), "r");
+  //FILE *f = fopen(filename.c_str(), "r");
+  std::ifstream f(filename);
+
   if (!f) {
     std::cerr << "!!! Error while opening file " << filename << "."
               << std::endl;
@@ -59,30 +114,24 @@ std::unique_ptr<data::Dataset> Svml::read_horizontal(
   std::list<quickrank::Label> data_labels;
   std::list<std::vector<quickrank::Feature>> data_instances;
 
-  while (not feof(f)) {
-    //#pragma omp parallel for ordered reduction(max:maxfid) num_threads(4) schedule(static,1)
-    //  for (int file_i=0; file_i<file_size_; file_i++) {
-    //    if(feof(f)) {file_i = file_size_; continue; }
-    ssize_t nread;
-    size_t linelength = 0;
-    char *line = NULL;
-    //lines are read one-at-a-time by threads
-    //#pragma omp ordered
-    {
-      nread = getline(&line, &linelength, f);
+  // Alloc 10kb on stack for each line,
+  // just to be on safe side for bigger input files.
+  char line[1024*10];
+  std::vector<quickrank::Feature> curr_instance;
+  curr_instance.reserve(128);
+  while (f.getline( line, sizeof line )) {
+    if ( (f.rdstate() & std::ifstream::failbit ) != 0 ) {
+      std::cerr << "!!! Failed to read input line (probably bigger than 10k) "
+                << filename << "." << std::endl;
+      exit(3);
     }
-    //if something is wrong with getline() or line is empty, skip to the next
-    if (nread <= 0) {
-      free(line);
-      continue;
-    }
+
     char *token = NULL, *pch = line;
     //skip initial spaces
     while (ISSPC(*pch) && *pch != '\0')
       ++pch;
     //skip comment line
     if (*pch == '#') {
-      free(line);
       continue;
     }
 
@@ -94,8 +143,9 @@ std::unique_ptr<data::Dataset> Svml::read_horizontal(
     quickrank::Label relevance = atof(token);
     size_t qid = atou(read_token(pch), "qid:");
 
-    // allocate feature vector and read instance
-    std::vector<quickrank::Feature> curr_instance(maxfid);
+    // Clean feature vector with 0s
+    curr_instance.clear();
+    curr_instance.resize(maxfid);
 
     //read a sequence of features, namely (fid,fval) pairs, then the ending description
     while (!ISEMPTY(token = read_token(pch, '#'))) {
@@ -127,11 +177,9 @@ std::unique_ptr<data::Dataset> Svml::read_horizontal(
       data_instances.push_back(std::move(curr_instance));  // move should avoid
       // copies
     }
-    //free mem
-    free(line);
   }
   //close input file
-  fclose(f);
+  f.close();
 
   std::chrono::high_resolution_clock::time_point start_processing =
       std::chrono::high_resolution_clock::now();

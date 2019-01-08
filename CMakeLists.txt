@@ -19,16 +19,16 @@ find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 # explicitly set default CMAKE_CXX_FLAGS_RELEASE options
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -D_GLIBCXX_PARALLEL")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 # explicitly set default CMAKE_CXX_FLAGS_DEBUG options
-set(CMAKE_CXX_FLAGS_DEBUG "-g -D_GLIBCXX_PARALLEL")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 # Compiler flags
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -Wall -march=native -mtune=native -Wa,-q")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_GLIBCXX_PARALLEL -std=c++11 -Wall -march=native -mtune=native -Wa,-q")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -Wall -O0 -Wa,-q")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -Wall -march=native -mtune=native")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_GLIBCXX_PARALLEL -std=c++11 -Wall -march=native -mtune=native")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -Wall -O0")
 endif()
 

@@ -20,6 +20,10 @@
  *  - Salvatore Trani(salvatore.trani@isti.cnr.it)
  */
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+  #include <ctime>
+#endif
+
 #include "optimization/post_learning/cleaver/random_pruning.h"
 
 namespace quickrank {

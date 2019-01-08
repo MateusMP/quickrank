@@ -32,7 +32,7 @@ VerticalDataset::VerticalDataset(std::shared_ptr<Dataset> h_dataset) {
   num_queries_ = h_dataset->num_queries();
 
   // transpose dataset
-  if (posix_memalign((void **) &data_,
+  if (alloc_aligned((void **) &data_,
                      16,
                      num_instances_ * num_features_ * sizeof(Feature)) != 0) {
     std::cerr
@@ -50,7 +50,7 @@ VerticalDataset::VerticalDataset(std::shared_ptr<Dataset> h_dataset) {
   }
 
   // allocate labels
-  if (posix_memalign((void **) &labels_, 16, num_instances_ * sizeof(Label))
+  if (alloc_aligned((void **) &labels_, 16, num_instances_ * sizeof(Label))
       != 0) {
     std::cerr
         << "!!! Impossible to allocate memory for relevance labels storage."
@@ -71,9 +71,9 @@ VerticalDataset::VerticalDataset(std::shared_ptr<Dataset> h_dataset) {
 
 VerticalDataset::~VerticalDataset() {
   if (data_)
-    free(data_);
+    free_aligned(data_);
   if (labels_)
-    free(labels_);
+    free_aligned(labels_);
 }
 
 

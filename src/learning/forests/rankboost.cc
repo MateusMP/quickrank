@@ -29,6 +29,7 @@
 #include <chrono>
 #include <sstream>
 #include <string.h>
+#include <omp.h>
 
 namespace quickrank {
 namespace learning {
@@ -40,7 +41,6 @@ Rankboost::Rankboost(size_t max_wr) {
   T = max_wr;
   best_T = 0;
   go_parallel = true;
-  omp_schedule = "dynamic";
 }
 
 Rankboost::Rankboost(const pugi::xml_document &model) {
@@ -252,7 +252,8 @@ void Rankboost::init(std::shared_ptr<data::Dataset> training_dataset,
   if (validation_dataset)
     validation_scores = new Score[validation_dataset->num_instances()]();
 
-  setenv("OMP_SCHEDULE", omp_schedule, 1);
+  omp_set_schedule(omp_sched_dynamic, 1);
+  //setenv("OMP_SCHEDULE", omp_schedule, 1);
 
   // allocate weak rankers and their weights
   weak_rankers = new WeakRanker *[T];
