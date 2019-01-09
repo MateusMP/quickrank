@@ -29,6 +29,7 @@
 #include "learning/forests/lambdamart.h"
 #include "learning/forests/lambdamartselective.h"
 #include "learning/forests/obliviouslambdamart.h"
+#include "learning/forests/stochasticnegative.h"
 #include "learning/forests/obliviousmart.h"
 // Added by Chiara Pierucci Andrea Battistini
 #include "learning/linear/coordinate_ascent.h"
@@ -121,6 +122,11 @@ std::shared_ptr<LTR_Algorithm> LTR_Algorithm::load_model_from_xml(
   else if (ranker_type == meta::MetaCleaver::NAME_)
     return std::shared_ptr<LTR_Algorithm>(
         new meta::MetaCleaver(xml_model));
+  else if (ranker_type == forests::StochasticNegative::NAME_)
+    return std::shared_ptr<LTR_Algorithm>(
+        new forests::StochasticNegative(xml_model));
+
+  std::cerr << ranker_type << " not configured for loading." << std::endl;
 
   return nullptr;
   //  else
